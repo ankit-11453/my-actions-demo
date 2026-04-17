@@ -2,7 +2,10 @@ pipeline {
     agent any
 
     environment {
-        VENV = "venv"
+        VENV = 'venv'
+        RESULTS_DIR = 'results'
+        APP_HOST = '127.0.0.1'
+        APP_PORT = '8000'
     }
 
     stages {
@@ -14,44 +17,57 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    python3 -m venv ${VENV} || true
-                    . ${VENV}/bin/activate
-                    pip install --upgrade pip
+                bat '''
+                    python --version
+                    if not exist %VENV% python -m venv %VENV%
+                    call %VENV%\\Scripts\\activate
+                    python -m pip install --upgrade pip
                     pip install -r requirements.txt
+                '''
+            }
+        }
+
+        stage('Install Newman') {
+            steps {
+                bat '''
+                    npm --version
                     npm install -g newman
+                    newman --version
                 '''
             }
         }
 
         stage('Start FastAPI App') {
             steps {
-                sh '''
-                    . ${VENV}/bin/activate
-                    nohup uvicorn app.user_api:app --host 127.0.0.1 --port 8000 > app.log 2>&1 &
-                    sleep 5
+                bat '''
+                    if not exist %RESULTS_DIR% mkdir %RESULTS_DIR%
+                    call %VENV%\\Scripts\\activate
+                    start /B cmd /c "uvicorn app.user_api:app --host %APP_HOST% --port %APP_PORT% > %RESULTS_DIR%\\app.log 2>&1"
+                    timeout /t 8 /nobreak
+                    curl http://%APP_HOST%:%APP_PORT%/health
                 '''
             }
         }
 
         stage('Run Newman API Tests') {
             steps {
-                sh '''
-                    . ${VENV}/bin/activate
-                    mkdir -p results
-                    newman run tests/postman/UserAPI.postman_collection.json \
-                      -e tests/postman/env.json \
-                      --reporters cli,json \
-                      --reporter-json-export results/newman-report.json
+                bat '''
+                    if not exist %RESULTS_DIR%\\newman mkdir %RESULTS_DIR%\\newman
+                    newman run tests\\postman\\UserAPI.postman_collection.json ^
+                      -e tests\\postman\\local_env.json ^
+                      -r cli,junit,json ^
+                      --reporter-junit-export %RESULTS_DIR%\\newman\\newman-report.xml ^
+                      --reporter-json-export %RESULTS_DIR%\\newman\\newman-report.json
                 '''
             }
         }
 
         stage('Run Robot Tests') {
             steps {
-                sh '''
-                    . ${VENV}/bin/activate
-                    robot -d results/robot tests/robot/suites
+                bat '''
+                    if not exist %RESULTS_DIR%\\robot mkdir %RESULTS_DIR%\\robot
+                    call %VENV%\\Scripts\\activate
+                    robot --outputdir %RESULTS_DIR%\\robot tests\\robot\\suites
                 '''
             }
         }
@@ -59,13 +75,15 @@ pipeline {
 
     post {
         always {
+            junit allowEmptyResults: true, testResults: 'results/newman/*.xml'
             robot(
                 outputPath: 'results/robot',
                 outputFileName: 'output.xml',
                 reportFileName: 'report.html',
-                logFileName: 'log.html'
+                logFileName: 'log.html',
+                disableArchiveOutput: false
             )
-            archiveArtifacts artifacts: 'results/**/*', fingerprint: true
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
         }
     }
 }
