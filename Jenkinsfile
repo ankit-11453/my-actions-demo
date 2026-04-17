@@ -19,13 +19,15 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 bat '''
-                    echo PATH=%%PATH%%
-                    py --version || python --version || where python
+                    echo %%PATH%%
+                    where python
+                    REM Use Windows Store Python path directly
+                    "C:\\Users\\Akisou\\AppData\\Local\\Microsoft\\WindowsApps\\py.exe" --version
                     if not exist %VENV% (
-                        py -m venv %VENV% || python -m venv %VENV%
+                        "C:\\Users\\Akisou\\AppData\\Local\\Microsoft\\WindowsApps\\py.exe" -m venv %VENV%
                     )
-                    call %VENV%\\Scripts\\activate
-                    python -m pip install --upgrade pip
+                    call %VENV%\\Scripts\\activate.bat
+                    %VENV%\\Scripts\\python.exe -m pip install--upgrade pip
                     pip install -r requirements.txt
                     pip list
                 '''
