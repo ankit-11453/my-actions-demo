@@ -1,9 +1,9 @@
 pipeline {
     agent any
 
-    options {
+        options {
         timestamps()
-    }
+            }
 
     environment {
         // Prefer the Windows Python Launcher if installed
@@ -129,7 +129,7 @@ pipeline {
             echo 'Build failed. Check Python availability, PATH, and venv creation logs.'
         }
     }
-}
+
 
         stage('Test Robot') {
             steps {
@@ -139,5 +139,4 @@ pipeline {
                 '''
             }
         }
-    }
 }
