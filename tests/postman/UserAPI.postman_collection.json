@@ -1,0 +1,316 @@
+{
+  "info": {
+    "_postman_id": "0f310c9a-b8ce-411e-b605-8428528f08c4",
+    "name": "UserAPI_E2E",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "53950643",
+    "_collection_link": "https://go.postman.co/collection/53950643-0f310c9a-b8ce-411e-b605-8428528f08c4?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Health request",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response time is below 2000 ms\", function () {\r",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Content-Type is JSON\", function () {\r",
+              "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Health response has status\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an(\"object\");\r",
+              "    pm.expect(jsonData.status).to.exist;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "User request",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const timestamp = Date.now();\r",
+              "pm.variables.set(\"name\", \"User_\" + timestamp);\r",
+              "pm.variables.set(\"email\", \"user_\" + timestamp + \"@test.com\");"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Create user response is valid\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an(\"object\");\r",
+              "    pm.expect(jsonData.id).to.exist;\r",
+              "    pm.expect(jsonData.name).to.eql(pm.variables.get(\"name\"));\r",
+              "    pm.expect(jsonData.email).to.eql(pm.variables.get(\"email\"));\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Store user id for next requests\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.collectionVariables.set(\"user_id\", jsonData.id);\r",
+              "    pm.collectionVariables.set(\"created_email\", jsonData.email);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"{{name}}\",\r\n  \"email\": \"{{email}}\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get User request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Fetched user matches created user\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get(\"user_id\"));\r",
+              "    pm.expect(jsonData.email).to.eql(pm.collectionVariables.get(\"created_email\"));\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Ravi Kumar\",\r\n  \"age\": 31,\r\n  \"email\": \"ravi.kumar@test.com\"\r\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/users/{{user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "{{user_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "List Users request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Response is an array\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an(\"array\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Created user exists in list\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    const userId = pm.collectionVariables.get(\"user_id\");\r",
+              "    const found = jsonData.some(u => String(u.id) === String(userId));\r",
+              "    pm.expect(found).to.be.true;\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Negative Scenario",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Validation error is returned\", function () {\r",
+              "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Error body exists\", function () {\r",
+              "    const jsonData = pm.response.json();\r",
+              "    pm.expect(jsonData).to.be.an(\"object\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"InvalidUser\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/users",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "if (!pm.environment.get(\"base_url\")) {\r",
+          "    throw new Error(\"base_url is not set in the active environment\");\r",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          "pm.test(\"Response time is below 2000 ms\", function () {\r",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+          "});\r",
+          "\r",
+          "pm.test(\"Content-Type header exists\", function () {\r",
+          "    pm.response.to.have.header(\"Content-Type\");\r",
+          "});"
+        ]
+      }
+    }
+  ]
+}
