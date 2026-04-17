@@ -6,8 +6,6 @@ pipeline {
         RESULTS_DIR = 'results'
         APP_HOST = '127.0.0.1'
         APP_PORT = '8000'
-        PATH = 'C:\\Users\\Akisou\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\Akisou\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\
-        LocalCache\\local-packages\\Python313;%PATH%'
     }
 
     stages {
@@ -20,7 +18,6 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 bat '''
-                    echo PATH=%%PATH%%
                     python --version
                     if not exist %VENV% python -m venv %VENV%
                     call %VENV%\\Scripts\\activate
